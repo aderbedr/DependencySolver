@@ -62,9 +62,6 @@ std::shared_ptr<Node> findOrInsert(int data, std::unordered_map<int, std::shared
 
 void resolveDependency(std::shared_ptr<Node> node, std::deque<int> &resolved){
    for (std::shared_ptr<Node> neighbor : node->parents){
-      auto foo = neighbor->data;
-      auto bar = std::find(resolved.begin(), resolved.end(), foo);
-      auto end = resolved.end();
       if (std::find(resolved.begin(), resolved.end(), neighbor->data) == resolved.end()){
          resolveDependency(neighbor, resolved);
       }
