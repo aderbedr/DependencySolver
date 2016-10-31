@@ -15,4 +15,4 @@ public:
 };
 
 std::shared_ptr<Node> findOrInsert(int data, std::unordered_map<int, std::shared_ptr<Node>> &nodes);
-void dep_resolve(std::shared_ptr<Node> node, std::deque<int> &resolved);
+void resolveDependency(std::shared_ptr<Node> node, std::deque<int> &resolved);
