@@ -1,40 +1,32 @@
-========================================================================
-    CONSOLE APPLICATION : PriorityListSolver Project Overview
-========================================================================
+PriorityListSolver:
 
-AppWizard has created this PriorityListSolver application for you.
+Command line: 
+PriorityListSolver.exe <file of dependencies>
 
-This file contains a summary of what you will find in each of the files that
-make up your PriorityListSolver application.
+The file passed in by argument should be of the format of lines of numbers such as:
+1 2
+Where 1 depends on 2. For instance, if the text file were as follows:
 
+1 4
+1 2
+3 4
+2 5
+3 5
+6 5
+3 7
+7 0
 
-PriorityListSolver.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+It could be drawn as following:
 
-PriorityListSolver.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
+1->4
+|  ^
+v  |
+2  3->7->0
+|  |
+v  v
+ 5
+ ^
+ |
+ 6
 
-PriorityListSolver.cpp
-    This is the main application source file.
-
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
-
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named PriorityListSolver.pch and a precompiled types file named StdAfx.obj.
-
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
-
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
-
-/////////////////////////////////////////////////////////////////////////////
+1 depends on 4 and 2, 3 depends on 4, 2 depends on 5, etc. A possible solution then would be to first resolve 0, then 7, 5, 6, 4, 3, 2, and finally 1.
