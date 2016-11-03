@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "scheduler.h"
 
-int _tmain(int argc, _TCHAR* argv[])
+int _tmain(int argc, _TCHAR*argv[])
 {
    if (argc < 2) {
       std::cout << "No dependency file found.";
@@ -12,8 +12,8 @@ int _tmain(int argc, _TCHAR* argv[])
    std::ifstream myReadFile;
    myReadFile.open(dependencyPath);
    if (myReadFile.is_open()) {
-      std::unordered_map<int, std::shared_ptr<Node>> nodes;
-      std::stack<std::shared_ptr<Node>> toProcess;
+      // Construct the node map
+      std::unordered_map<int, Node *> nodes;
       while (!myReadFile.eof()) {
          int child = INT_MAX;
          int parent = INT_MAX;
@@ -23,35 +23,39 @@ int _tmain(int argc, _TCHAR* argv[])
             std::cout << "Invalid dependency file format. Format should be lines formatted of '<x> <y>', where x depends on y.";
             return 1;
          }
-         std::shared_ptr<Node> childNode = findOrInsert(child, nodes);
-         std::shared_ptr<Node> parentNode = findOrInsert(parent, nodes);
+         Node *childNode = FindOrInsert(child, nodes);
+         Node *parentNode = FindOrInsert(parent, nodes);
          childNode->parents.push_back(parentNode);
+         parentNode->children.push_back(childNode);
       }
       myReadFile.close();
-      for (auto n : nodes){
-         toProcess.push(n.second);
-      }
-      std::deque<int> resolved;
-      while (!toProcess.empty()){
-         std::shared_ptr<Node> node = toProcess.top();
-         if (std::find(resolved.begin(), resolved.end(), node->data) == resolved.end()){
-            resolveDependency(toProcess.top(), resolved);
+
+      Node *current = new Node(0);
+      for (std::pair<int, Node *> n : nodes){
+         if (n.second->parents.empty()){
+            current->children.push_back(n.second);
+            n.second->parents.push_back(current);
          }
-         toProcess.pop();
       }
 
-      std::deque<int>::iterator it = resolved.end();
-      while (it != resolved.begin()){
-         std::cout << *--it << std::endl;
+      Element *head = new Element();
+      std::queue<Node *> leaves;
+      ConstructTree(head, current, leaves);
+      head->PrintPossibilities();
+
+      FreeTree(head);
+      for (std::pair<int, Node *> n : nodes){
+         delete n.second;
       }
+      delete current;
    }
    return 0;
 }
 
-std::shared_ptr<Node> findOrInsert(int data, std::unordered_map<int, std::shared_ptr<Node>> &nodes){
-   std::unordered_map<int, std::shared_ptr<Node>>::const_iterator got = nodes.find(data);
+Node *FindOrInsert(int data, std::unordered_map<int, Node *> &nodes){
+   std::unordered_map<int, Node *>::const_iterator got = nodes.find(data);
    if (got == nodes.end()){
-      std::shared_ptr<Node> parentNode = std::make_unique <Node>(data);
+      Node *parentNode = new Node(data);
       nodes.insert({ data, parentNode });
       return parentNode;
    }
@@ -60,11 +64,60 @@ std::shared_ptr<Node> findOrInsert(int data, std::unordered_map<int, std::shared
    }
 }
 
-void resolveDependency(std::shared_ptr<Node> node, std::deque<int> &resolved){
-   for (std::shared_ptr<Node> neighbor : node->parents){
-      if (std::find(resolved.begin(), resolved.end(), neighbor->data) == resolved.end()){
-         resolveDependency(neighbor, resolved);
+
+void ConstructTree(Element *head, Node *current, std::queue<Node *> leaves) {
+   for (Node *child : current->children){
+      for (Node *parent : child->parents){
+         if (parent->data != 0 && !head->HasAncestor(parent->data)){
+            break;
+         }
+         leaves.push(child);
       }
    }
-   resolved.push_front(node->data);
+
+   while (!leaves.empty()){
+      Node *leaf = leaves.front();
+      leaves.pop();
+      if (head->children.find(leaf->data) != head->children.end())
+         continue;
+      if (head->HasAncestor(leaf->data) || leaf->data == head->data)
+         continue;
+      Element *leafElement = new Element(leaf->data);
+      head->children.insert({ leaf->data, leafElement });
+      leafElement->parent = head;
+      ConstructTree(leafElement, leaf, leaves);
+      leaves.push(leaf);
+   }
+}
+
+void FreeTree(Element *head){
+   for (std::pair<int, Element *> child : head->children){
+      FreeTree(child.second);
+   }
+   delete head;
+}
+
+void Element::PrintPossibilities(){
+   for (std::pair<int, Element *> child : this->children){
+      child.second->PrintPossibilities();
+   }
+
+   if (this->children.empty()){
+      Element *current = this;
+      while (current->parent != nullptr){
+         std::cout << current->data;
+         current = current->parent;
+         if (current->parent != nullptr)
+            std::cout << "->";
+      }
+      std::cout << std::endl;
+   }
+}
+
+bool Element::HasAncestor(int goalAncestor){
+   if (this->data == goalAncestor)
+      return true;
+   else if (this->parent == nullptr)
+      return false;
+   return this->parent->HasAncestor(goalAncestor);
 }
